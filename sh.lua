@@ -63,16 +63,25 @@ local function command(cmd, ...)
 		local _, exit, status = p:close()
 		os.remove(M.tmpfile)
 
-		return setmetatable({
+		local t = {
 			__input = output,
 			__exitcode = exit == 'exit' and status or 127,
 			__signal = exit == 'signal' and status or 0,
-		}, {
+		}
+		local mt = {
+			__index = function(self, k, ...)
+				if self == t then -- t:k(...)
+					return _G[k] --, ...
+				else
+					error("index ???", 2)
+				end
+			end,
 			__tostring = function(self)
 				-- return trimmed command output as a string
 				return self.__input:match('^%s*(.-)%s*$')
 			end
-		})
+		}
+		return setmetatable(t, mt)
 	end
 end
 
