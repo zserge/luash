@@ -25,3 +25,22 @@ print( sh "type" "ls" )
 -- 4.
 sh "type" "ls" : print()
 
+
+-- sample from the README.md
+
+--[[
+local sh = require('sh')
+
+local words = 'foo\nbar\nfoo\nbaz\n'
+local u = uniq(sort({__input = words})) -- like $(echo ... | sort | uniq)
+print(u) -- prints "bar", "baz", "foo"
+
+sort {__input = words} : uniq() : print()
+
+
+local gittag = sh ('git', 'tag') -- gittag(...) is same as git('tag', ...)
+gittag('-l') : print() -- list all git tags
+
+gittag '--help' :wc "-l" : print()
+
+]]--
