@@ -88,7 +88,7 @@ mt.__index = function(t, cmd)
 	return command(cmd)
 end
 
--- export command() function and configurable temprorary "input" file
+-- export command() function and configurable temporary "input" file
 M.command = command
 M.tmpfile = '/tmp/shluainput'
 
