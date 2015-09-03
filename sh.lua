@@ -70,7 +70,7 @@ local function command(cmd, ...)
 		}
 		local mt = {
 			__index = function(self, k, ...)
-				if self == t then -- t:k(...)
+				if self == t then
 					return _G[k] --, ...
 				else
 					error("index ???", 2)
@@ -94,11 +94,17 @@ end
 
 -- set hook for undefined variables
 mt.__index = function(t, cmd)
+--	if cmd == "run" or cmd == "" then
+--		return function(cmd) return command(cmd) end
+--	end
 	return command(cmd)
 end
 
 -- export command() function and configurable temporary "input" file
 M.command = command
 M.tmpfile = '/tmp/shluainput'
+
+-- allow to call sh to run shell commands
+setmetatable(M, {__call = function(_, cmd, ...) return command(cmd, ...) end})
 
 return M
