@@ -70,11 +70,7 @@ local function command(cmd, ...)
 		}
 		local mt = {
 			__index = function(self, k, ...)
-				if self == t then
-					return _G[k] --, ...
-				else
-					error("index ???", 2)
-				end
+				return _G[k] --, ...
 			end,
 			__tostring = function(self)
 				-- return trimmed command output as a string
