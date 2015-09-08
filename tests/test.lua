@@ -1,3 +1,4 @@
+package.path = package.path .. ";../?.lua"
 local test = require('gambiarra')
 
 local sh = require('sh')
