@@ -39,6 +39,19 @@ local u = uniq(sort({__input = words})) -- like $(echo ... | sort | uniq)
 print(u) -- prints "bar", "baz", "foo"
 ```
 
+Pipelines can be also written as chained function calls. Lua allows to omit parens, so the syntax really resembles unix shell:
+
+``` lua
+-- $ ls /bin | grep $filter | wc -l
+
+-- normal syntax
+wc(grep(ls('/bin'), filter), '-l')
+-- chained syntax
+ls('/bin'):grep(filter):wc('-l')
+-- chained syntax without parens
+ls '/bin' : grep filter : wc '-l'
+```
+
 ## Partial commands and commands with tricky names
 
 You can use `sh.command` to construct a command function, optionally
@@ -54,6 +67,8 @@ local gittag = sh.command('git', 'tag') -- gittag(...) is same as git('tag', ...
 
 gittag('-l') -- list all git tags
 ```
+
+`sh` can be used as a function as well, it's an alias to `sh.command()`
 
 ## Exit status and signal values
 
