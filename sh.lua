@@ -90,9 +90,6 @@ end
 
 -- set hook for undefined variables
 mt.__index = function(t, cmd)
---	if cmd == "run" or cmd == "" then
---		return function(cmd) return command(cmd) end
---	end
 	return command(cmd)
 end
 
@@ -101,6 +98,10 @@ M.command = command
 M.tmpfile = '/tmp/shluainput'
 
 -- allow to call sh to run shell commands
-setmetatable(M, {__call = function(_, cmd, ...) return command(cmd, ...) end})
+setmetatable(M, {
+	__call = function(_, cmd, ...)
+		return command(cmd, ...)
+	end
+})
 
 return M
