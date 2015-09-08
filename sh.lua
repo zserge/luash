@@ -63,16 +63,21 @@ local function command(cmd, ...)
 		local _, exit, status = p:close()
 		os.remove(M.tmpfile)
 
-		return setmetatable({
+		local t = {
 			__input = output,
 			__exitcode = exit == 'exit' and status or 127,
 			__signal = exit == 'signal' and status or 0,
-		}, {
+		}
+		local mt = {
+			__index = function(self, k, ...)
+				return _G[k] --, ...
+			end,
 			__tostring = function(self)
 				-- return trimmed command output as a string
 				return self.__input:match('^%s*(.-)%s*$')
 			end
-		})
+		}
+		return setmetatable(t, mt)
 	end
 end
 
@@ -85,11 +90,17 @@ end
 
 -- set hook for undefined variables
 mt.__index = function(t, cmd)
+--	if cmd == "run" or cmd == "" then
+--		return function(cmd) return command(cmd) end
+--	end
 	return command(cmd)
 end
 
 -- export command() function and configurable temporary "input" file
 M.command = command
 M.tmpfile = '/tmp/shluainput'
+
+-- allow to call sh to run shell commands
+setmetatable(M, {__call = function(_, cmd, ...) return command(cmd, ...) end})
 
 return M
