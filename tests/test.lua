@@ -18,6 +18,9 @@ test('Check command pipeline', function()
 	local r = wc(seq(1, 10), '-l')
 	ok(tonumber(tostring(r)) == 10, 'seq 1 10 | wc -l')
 
+	local r = seq(1, 10) : wc('-l')
+	ok(tonumber(tostring(r)) == 10, 'seq 1 10 | wc -l')
+
 	local r = wc(seq(1, 10), seq(20, 25), '-l')
 	ok(tonumber(tostring(r)) == 16, '(seq 1 10 ; seq 20 25) | wc -l')
 end)
@@ -41,6 +44,12 @@ test('Check command with predefined args', function()
 	ok(tostring(seq10(12)) == '10\n11\n12', 'seq 10 12')
 	ok(tostring(seq10(15)) == '10\n11\n12\n13\n14\n15', 'seq 10 15')
 	ok(tostring(seq10('-1', 8)) == '10\n9\n8', 'seq 10 9 8')
+end)
+
+test('Check sh called as function', function()
+	local seq10 = sh('seq', 10)
+	ok(type(seq10) == 'function', 'sh() returns a command function')
+	ok(tostring(seq10(12)) == '10\n11\n12', 'seq 10 12')
 end)
 
 test('Check command with table args', function()
