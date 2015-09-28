@@ -4,6 +4,17 @@
 
 Tiny library for shell scripting with Lua (inspired by Python's sh module).
 
+## Install
+
+Via luarocks:
+
+```
+luarocks install --server=http://luarocks.org/dev luash 
+
+```
+
+Or just clone this repo and copy sh.lua into your project.
+
 ## Simple usage
 
 Every command that can be called via os.execute can be used a global function.
