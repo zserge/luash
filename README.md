@@ -78,6 +78,9 @@ Each command function returns a table with `__exitcode` and `__signal` fields.
 Those hold the exit status and signal value as numbers. Zero exit status means
 the command was executed successfully.
 
+SInce `f:close()` returns exitcode and signal in Lua 5.2 or newer - this will
+not work in Lua 5.1 and current LuaJIT.
+
 ## Command arguments as a table
 
 Key-value arguments can be also specified as argument table pairs:
