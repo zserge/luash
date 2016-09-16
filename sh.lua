@@ -3,7 +3,7 @@ local M = {}
 -- converts key and it's argument to "-k" or "-k=v" or just ""
 local function arg(k, a)
 	if not a then return k end
-	if type(a) == 'string' and #a > 0 then return k..'='..a end
+	if type(a) == 'string' and #a > 0 then return k..'="'..a..'"' end
 	if type(a) == 'number' then return k..'='..tostring(a) end
 	if type(a) == 'boolean' and a == true then return k end
 	error('invalid argument type', type(a), a)
