@@ -15,8 +15,9 @@ local function flatten(t)
 
 	local function f(t)
 		local keys = {}
-		for k, v in ipairs(t) do
+		for k = 1, #t do
 			keys[k] = true
+			local v = t[k]
 			if type(v) == 'table' then
 				f(v)
 			else
