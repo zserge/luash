@@ -69,7 +69,7 @@ test('Check sh called as function', function()
 end)
 
 test('Check command with table args', function()
-	local r = stat('/bin', {format='"%a %n"'})
+	local r = stat('/bin', {format='%a %n'})
 	ok(tostring(r) == '755 /bin', 'stat --format "%a %n" /bin')
 end)
 
