@@ -16,7 +16,7 @@ require('gambiarra')(function(e, test, msg)
 	end
 end)
 
-local sh = require('sh')
+local sh = require('sh').install()
 
 test('Check command output', function()
 	ok(tostring(seq(1, 5)) == '1\n2\n3\n4\n5', 'seq 1 5')
