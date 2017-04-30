@@ -21,7 +21,7 @@ Every command that can be called via os.execute can be used a global function.
 All the arguments passed into the function become command arguments.
 
 ``` lua
-require('sh')
+require('sh').install()
 
 local wd = tostring(pwd()) -- calls `pwd` and returns its output as a string
 
@@ -45,7 +45,7 @@ one I/O loop at a time). So the inner-most command is executed, its output is
 read, the the outer command is execute with the output redirected etc.
 
 ``` lua
-require('sh')
+require('sh').install()
 
 local words = 'foo\nbar\nfoo\nbaz\n'
 local u = uniq(sort({__input = words})) -- like $(echo ... | sort | uniq)
@@ -97,7 +97,7 @@ not work in Lua 5.1 and current LuaJIT.
 Key-value arguments can be also specified as argument table pairs:
 
 ```lua
-require('sh')
+require('sh').install()
 
 -- $ somecommand --format=long --interactive -u=0
 somecommand({format="long", interactive=true, u=0})
