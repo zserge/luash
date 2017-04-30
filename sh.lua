@@ -89,11 +89,6 @@ if mt == nil then
   setmetatable(_G, mt)
 end
 
--- set hook for undefined variables
-mt.__index = function(t, cmd)
-	return command(cmd)
-end
-
 -- export command() function and configurable temporary "input" file
 M.command = command
 M.tmpfile = '/tmp/shluainput'
@@ -104,5 +99,17 @@ setmetatable(M, {
 		return command(cmd, ...)
 	end
 })
+
+-- Let's luash to deal with undefined variables, those will be commands
+M.install = function()
+  -- set hook for undefined variables
+  mt.__index = function(t, cmd)
+    return command(cmd)
+  end
+  -- Remove install from M now that the feature has been activated
+  M.install = nil
+
+  return M
+end
 
 return M
