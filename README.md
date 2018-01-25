@@ -1,4 +1,10 @@
 # luash
+**Fork note: Powershell support is still very preliminary. Add-Assembly and calling managed assemblies is not yet supported. To call cmdlets, use verb__noun instead of verb-noun:**
+
+```
+local sh = require("sh")
+write__host("Hello World.")
+```
 
 [![Build Status](https://travis-ci.org/zserge/luash.svg)](https://travis-ci.org/zserge/luash)
 
