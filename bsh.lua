@@ -5,8 +5,8 @@ Bootstrap shell
 
 
 local function return_shell_output (cmd, pattern, debug)
-if not cmd then io.stderr:write("cmd to pass to a shell was blank") return nil end
-if debug then print(string.format("cmd: %s, pattern: %s", cmd, pattern)) end
+  if not cmd then io.stderr:write("cmd to pass to a shell was blank") return nil end
+  if debug then print(string.format("cmd: %s, pattern: %s", cmd, pattern)) end
 
 	local match = false
 	local handle = io.popen(cmd)
