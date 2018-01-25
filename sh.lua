@@ -1,84 +1,23 @@
+--[[
+lua-shell. Converts global scoped function calls into shell commands.
+TODO: create lines co-routine iterator over result
+TODO: create pipe() function to use lua memory as a buffer
+TODO: investigate scope of shell invocation (once, many?).
+follow up is how to preserve environment?
+TODO: can we change global scope to prevent "pollution" of actual global scope?
+--]]
 local M = {}
+local bootsrp = require("bsh")
+
+--init...
 local slash = package.config:sub(1,1)
-tmpfile = "/tmp/"
-trim = "^%s*(.-)%s*$"
-filename = '.shluainput'
-local function return_os()
-	if slash == "\\" then
-		return "WIN"
-	else
-		local ok = return_shell_output("uname -s")
-    if ok then 
-      return ok
-    else
-      return "POSIX"
-    end
-  end
-end
-_os = return_os()
-
-local function return_shell()
-    if _os == "WIN" then
-      return "powershell"
-    else
-      return return_shell_output("echo $SHELL",trim)
-    end
-end
-
-local shell = return_shell()
-
-local function return_shell_output(cmd, pattern, debug)
-if not cmd then io.stderr:write("cmd to pass to a shell was blank") return nil end
-if debug then print(string.format("cmd: %s, pattern: %s", cmd, pattern)) end
-
-	local match = false
-	local handle = io.popen(cmd)
-	if not pattern then 
-		match = handle:read("*a")
-	elseif type(pattern) == "string" or type(pattern) == "function"then
-		for v in handle:lines() do 
-			if debug then print(v) end			
-			match = string.match(v, pattern)
-			if match then
-				if debug then print(string.format("Found %s", match)) end
-				break
-			end
-		end
-	else
-		io.stderr:write("Pattern was of wrong type for command " .. cmd)
-	end
-	handle:close()
-	return match
-end
-
-local function test_path(location)
-  local cmd = ""
-  local pattern = ""
-  local ok = nil
-  assert(location)
-  --NOT string.match %s, this is replaced with the value of 'location'.
-  pattern = string.format("(%s)",location)
-  --check location exists
-  if _os == WIN then
-    cmd = string.format("if($(test-path -path %s){echo %s}", location, location)      
-  else
-    cmd = string.format("[ -d \'%s\' ] && echo \'%s\'", location, location)
-  end
-  
-  if return_shell_output(cmd,pattern) then 
-    return true 
-  else
-    return false
-  end
-end
-
-local function return_home_dir()
-  local loc_data = "echo $HOME"
-  if _os == "WIN" then
-    loc_data = "powershell $env:localappdata"
-  end
-  return return_shell_output(loc_data,trim)
-end
+local filename = '.shluainput'
+local tmpfile = "/tmp/"..filename
+local trim = "^%s*(.-)%s*$"
+local _os = bootsrp.get_os()
+local shell = bootsrp.get_shell(_os)
+local home_dir = bootsrp.get_home_dir(_os)
+tmpfile = string.format("%s%s%s",home_dir,slash,filename)
 
 -- converts key and it's argument to "-k" or "-k=v" or just ""
 local function arg(k, a)
@@ -141,6 +80,7 @@ local function command(cmd, ...)
 			s = s .. ' <'..tmpfile
 		end
     myt = {}
+    s= s:gsub("__","-")
     s = string.format("%s %s",shell, s)
 		local p = io.popen(s, 'r')
 		local output = p:read('*a')
@@ -216,7 +156,7 @@ setmetatable(M, {
 	end
 })
 
-tmpfile = string.format("%s%s%s",return_home_dir(),slash,filename)
+
 M.get_temp = get_temp
 M.set_temp = set_temp
 M.get_shell = get_shell
