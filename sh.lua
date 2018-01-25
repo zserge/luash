@@ -1,4 +1,23 @@
+--[[
+lua-shell. Converts global scoped function calls into shell commands.
+TODO: create lines co-routine iterator over result
+TODO: create pipe() function to use lua memory as a buffer
+TODO: investigate scope of shell invocation (once, many?).
+follow up is how to preserve environment?
+TODO: can we change global scope to prevent "pollution" of actual global scope?
+--]]
 local M = {}
+local bootsrp = require("bsh")
+
+--init...
+local slash = package.config:sub(1,1)
+local filename = '.shluainput'
+local tmpfile = "/tmp/"..filename
+local trim = "^%s*(.-)%s*$"
+local _os = bootsrp.get_os()
+local shell = bootsrp.get_shell(_os)
+local home_dir = bootsrp.get_home_dir(_os)
+tmpfile = string.format("%s%s%s",home_dir,slash,filename)
 
 -- converts key and it's argument to "-k" or "-k=v" or just ""
 local function arg(k, a)
@@ -46,24 +65,31 @@ local function command(cmd, ...)
 	return function(...)
 		local args = flatten({...})
 		local s = cmd
+    --TODO: Powershell requires quote sanitization. Only outer quotes of the command parameter can be double quotes
 		for _, v in ipairs(prearg) do
 			s = s .. ' ' .. v
 		end
 		for k, v in pairs(args.args) do
 			s = s .. ' ' .. v
 		end
-
+    if args.input == "" then args.input = false end
 		if args.input then
-			local f = io.open(M.tmpfile, 'w')
+			local f = io.open(tmpfile, 'w')
 			f:write(args.input)
 			f:close()
-			s = s .. ' <'..M.tmpfile
+			s = s .. ' <'..tmpfile
 		end
+    myt = {}
+    s= s:gsub("__","-")
+    s = string.format("%s %s",shell, s)
 		local p = io.popen(s, 'r')
 		local output = p:read('*a')
 		local _, exit, status = p:close()
-		os.remove(M.tmpfile)
-
+    
+    if args.input then
+      os.remove(tmpfile)
+    end
+    
 		local t = {
 			__input = output,
 			__exitcode = exit == 'exit' and status or 127,
@@ -94,9 +120,34 @@ mt.__index = function(t, cmd)
 	return command(cmd)
 end
 
+local function set_temp(location)
+  --This should be sanitized
+  if test_path(location) then
+    tmpfile = location
+    return true
+  else
+    return nil, "location not found"
+  end
+end
+
+local function get_temp()
+  return tmpfile
+end
+local function get_shell()
+  return shell
+end
+
+local function set_shell(sh_name)
+  --assert(false,"NOT IMPLEMENTED")
+  if not os == "WIN" then 
+    local ok = return_shell_output("which "..sh_name,trim)
+    if ok then shell = sh_name return true end
+  end
+  return nil, "Not supported"
+end
+
 -- export command() function and configurable temporary "input" file
 M.command = command
-M.tmpfile = '/tmp/shluainput'
 
 -- allow to call sh to run shell commands
 setmetatable(M, {
@@ -104,5 +155,13 @@ setmetatable(M, {
 		return command(cmd, ...)
 	end
 })
+
+
+M.get_temp = get_temp
+M.set_temp = set_temp
+M.get_shell = get_shell
+M.set_shell = set_shell
+M.slash = slash
+M.os = _os
 
 return M
