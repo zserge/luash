@@ -33,6 +33,9 @@ local function flatten(t)
 				table.insert(result.args, arg(key, v))
 			end
 		end
+		if result.input == '' then
+			result.input = nil
+		end
 	end
 
 	f(t)
@@ -62,8 +65,9 @@ local function command(cmd, ...)
 		local p = io.popen(s, 'r')
 		local output = p:read('*a')
 		local _, exit, status = p:close()
-		os.remove(M.tmpfile)
-
+		if args.input then
+			os.remove(M.tmpfile)
+		end
 		local t = {
 			__input = output,
 			__exitcode = exit == 'exit' and status or 127,
