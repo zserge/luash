@@ -9,7 +9,7 @@ Tiny library for shell scripting with Lua (inspired by Python's sh module).
 Via luarocks:
 
 ```
-luarocks install --server=http://luarocks.org/dev luash 
+luarocks install --server=http://luarocks.org/dev luash
 
 ```
 
@@ -90,7 +90,7 @@ Those hold the exit status and signal value as numbers. Zero exit status means
 the command was executed successfully.
 
 SInce `f:close()` returns exitcode and signal in Lua 5.2 or newer - this will
-not work in Lua 5.1 and current LuaJIT.
+not work in Lua 5.1 and LuaJIT built without -DLUAJIT_ENABLE_LUA52COMPAT.
 
 ## Command arguments as a table
 
