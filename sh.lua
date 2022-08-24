@@ -89,8 +89,24 @@ if mt == nil then
   setmetatable(_G, mt)
 end
 
+local function list_contains(v, t)
+        for _, kv in pairs(v) do
+                if kv == t:sub(1, #kv)
+                then
+                        return true
+                end
+        end
+        return false
+end
+
+__index_ignore = {"_G", "_PROMPT"}
+
 -- set hook for undefined variables
 mt.__index = function(t, cmd)
+        if list_contains(__index_ignore, cmd)
+        then
+                return rawget(t, cmd)
+        end
 	return command(cmd)
 end
 
