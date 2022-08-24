@@ -1,4 +1,4 @@
-package.path = package.path .. ";../?.lua"
+package.path = package.path .. ";../?.lua;tests/?.lua"
 local test = require('gambiarra')
 
 local tests_passed = 0
