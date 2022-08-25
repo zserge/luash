@@ -148,12 +148,14 @@ local function command(cmd, ...)
             table.insert(all_args, x)
         end
 
-        local status, cause, output, _ = pipe_simple(
+        local status, cause, stdout, stderr = pipe_simple(
             args.input, cmd, table.unpack(all_args)
         )
 
         local t = {
-            __input = output,
+            __input = stdout, -- set input = output for pipelines
+            __stdout = stdout,
+            __stderr = stderr,
             __exitcode = cause == "exited" and status or 127,
             __signal = exit == "killed" and status or 0,
         }
@@ -163,7 +165,14 @@ local function command(cmd, ...)
             end,
             __tostring = function(self)
                 -- return trimmed command output as a string
-                return self.__input:match('^%s*(.-)%s*$')
+                local out = self.__stdout:match('^%s*(.-)%s*$')
+                local err = self.__stderr:match('^%s*(.-)%s*$')
+                if #err == 0
+                then
+                    return out
+                end
+                -- if there is an error, print the output and error string
+                return "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode
             end
         }
         return setmetatable(t, mt)
@@ -200,7 +209,7 @@ end
 
 M.__index_ignore_prefix   = {"_G", "_PROMPT"}
 M.__index_ignore_exact    = {}
-M.__index_ignore_function = {"cd"}
+M.__index_ignore_function = {"cd", "stdout", "stderr"}
 
 --
 -- set hook for undefined variables
@@ -224,13 +233,23 @@ end
 --
 -- manually defined functions
 --
+FUNCTIONS = {}
 
 local function cd(dir)
     return posix.chdir(dir)
 end
 
-FUNCTIONS = {}
+local function stdout(t)
+    return t.__stdout
+end
+
+local function stderr(t)
+    return t.__stderr
+end
+
 FUNCTIONS.cd = cd
+FUNCTIONS.stdout = stdout
+FUNCTIONS.stderr = stderr
 
 --
 -- export command() function and configurable temporary "input" file
