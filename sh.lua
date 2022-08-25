@@ -179,9 +179,18 @@ if mt == nil then
     setmetatable(_G, mt)
 end
 
-local function list_contains(v, t)
+
+local function strcmp(a, b)
+    return a == b
+end
+
+local function prefcmp(a, b)
+    return a == b:sub(1, #a)
+end
+
+local function list_contains(v, t, comp)
     for _, kv in pairs(v) do
-        if kv == t:sub(1, #kv)
+        if comp(kv, t)
         then
             return true
         end
@@ -189,18 +198,39 @@ local function list_contains(v, t)
     return false
 end
 
-__index_ignore = {"_G", "_PROMPT"}
+M.__index_ignore_prefix   = {"_G", "_PROMPT"}
+M.__index_ignore_exact    = {}
+M.__index_ignore_function = {"cd"}
 
 --
 -- set hook for undefined variables
 --
 mt.__index = function(t, cmd)
-    if list_contains(__index_ignore, cmd)
+    if list_contains(M.__index_ignore_prefix, cmd, prefcmp)
     then
         return rawget(t, cmd)
     end
+    if list_contains(M.__index_ignore_exact, cmd, strcmp)
+    then
+        return rawget(t, cmd)
+    end
+    if list_contains(M.__index_ignore_function, cmd, strcmp)
+    then
+        return FUNCTIONS[cmd]
+    end
     return command(cmd)
 end
+
+--
+-- manually defined functions
+--
+
+local function cd(dir)
+    return posix.chdir(dir)
+end
+
+FUNCTIONS = {}
+FUNCTIONS.cd = cd
 
 --
 -- export command() function and configurable temporary "input" file
