@@ -207,6 +207,9 @@ local function list_contains(v, t, comp)
     return false
 end
 
+--
+-- Define patterns that the __index function should ignore
+--
 M.__index_ignore_prefix   = {"_G", "_PROMPT"}
 M.__index_ignore_exact    = {}
 M.__index_ignore_function = {"cd", "stdout", "stderr"}
@@ -214,20 +217,22 @@ M.__index_ignore_function = {"cd", "stdout", "stderr"}
 --
 -- set hook for undefined variables
 --
-mt.__index = function(t, cmd)
-    if list_contains(M.__index_ignore_prefix, cmd, prefcmp)
-    then
-        return rawget(t, cmd)
+local function install()
+    mt.__index = function(t, cmd)
+        if list_contains(M.__index_ignore_prefix, cmd, prefcmp)
+        then
+            return rawget(t, cmd)
+        end
+        if list_contains(M.__index_ignore_exact, cmd, strcmp)
+        then
+            return rawget(t, cmd)
+        end
+        if list_contains(M.__index_ignore_function, cmd, strcmp)
+        then
+            return FUNCTIONS[cmd]
+        end
+        return command(cmd)
     end
-    if list_contains(M.__index_ignore_exact, cmd, strcmp)
-    then
-        return rawget(t, cmd)
-    end
-    if list_contains(M.__index_ignore_function, cmd, strcmp)
-    then
-        return FUNCTIONS[cmd]
-    end
-    return command(cmd)
 end
 
 --
@@ -252,9 +257,10 @@ FUNCTIONS.stdout = stdout
 FUNCTIONS.stderr = stderr
 
 --
--- export command() function and configurable temporary "input" file
+-- export command() and install() functions
 --
 M.command = command
+M.install = install
 
 --
 -- allow to call sh to run shell commands
@@ -262,6 +268,13 @@ M.command = command
 setmetatable(M, {
     __call = function(_, cmd, ...)
         return command(cmd, ...)
+    end,
+    __index = function(t, cmd)
+        if list_contains(M.__index_ignore_function, cmd, strcmp)
+        then
+            return FUNCTIONS[cmd]
+        end
+        return command(cmd)
     end
 })
 
