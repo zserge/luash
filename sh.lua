@@ -133,6 +133,21 @@ local function flatten(t)
 end
 
 --
+-- return a string representation of a shell command outpu
+--
+local function tostring(self)
+    -- return trimmed command output as a string
+    local out = self.__stdout:match('^%s*(.-)%s*$')
+    local err = self.__stderr:match('^%s*(.-)%s*$')
+    if #err == 0
+    then
+        return out
+    end
+    -- if there is an error, print the output and error string
+    return "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode
+end
+
+--
 -- returns a function that executes the command with given args and returns its
 -- output, exit status etc
 --
@@ -161,19 +176,9 @@ local function command(cmd, ...)
         }
         local mt = {
             __index = function(self, k, ...)
-                return _G[k] --, ...
+                return M[k]
             end,
-            __tostring = function(self)
-                -- return trimmed command output as a string
-                local out = self.__stdout:match('^%s*(.-)%s*$')
-                local err = self.__stderr:match('^%s*(.-)%s*$')
-                if #err == 0
-                then
-                    return out
-                end
-                -- if there is an error, print the output and error string
-                return "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode
-            end
+            __tostring = tostring
         }
         return setmetatable(t, mt)
     end
@@ -188,7 +193,11 @@ if mt == nil then
     setmetatable(_G, mt)
 end
 
-
+--
+-- String comparison functions: strcmp (returns true only if two strings are
+-- identical), prefcmp (returns true only if the second string starts with the
+-- first string).
+--
 local function strcmp(a, b)
     return a == b
 end
@@ -240,8 +249,29 @@ end
 --
 FUNCTIONS = {}
 
-local function cd(dir)
-    return posix.chdir(dir)
+local function cd(...)
+    local args = flatten({...})
+    local dir = args.args[1]
+    local pt = posix.chdir(dir)
+    local t = {
+        __input = args.input, -- set input = output for pipelines
+        __stdout = args.input,
+        __stderr = "",
+        __exitcode = 0,
+        __signal = 0,
+    }
+    if pt == nil
+    then
+        t.__stderr = "cd: The directory \"" .. dir .. "\" does not exist"
+        t.__exitcode = 1
+    end
+    local mt = {
+        __index = function(self, k, ...)
+            return M[k]
+        end,
+        __tostring = tostring
+    }
+    return setmetatable(t, mt)
 end
 
 local function stdout(t)
