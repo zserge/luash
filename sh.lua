@@ -148,6 +148,11 @@ local function tostring(self)
 end
 
 --
+-- Configurable flag that will raise errors and/or halt program on error
+--
+M.__raise_errors  = true
+
+--
 -- returns a function that executes the command with given args and returns its
 -- output, exit status etc
 --
@@ -166,6 +171,10 @@ local function command(cmd, ...)
         local status, cause, stdout, stderr = pipe_simple(
             args.input, cmd, table.unpack(all_args)
         )
+
+        if M.__raise_errors and status ~= 0 then
+            error(stderr)
+        end
 
         local t = {
             __input = stdout, -- set input = output for pipelines
@@ -254,7 +263,7 @@ local function cd(...)
     local dir = args.args[1]
     local pt = posix.chdir(dir)
     local t = {
-        __input = args.input, -- set input = output for pipelines
+        __input = args.input, -- set input = output from previous pipelines
         __stdout = args.input,
         __stderr = "",
         __exitcode = 0,
