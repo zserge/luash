@@ -17,6 +17,8 @@ require('gambiarra')(function(e, test, msg)
 end)
 
 local sh = require('sh')
+sh.install()
+sh.__raise_errors = false
 
 test('Check command output', function()
 	ok(tostring(seq(1, 5)) == '1\n2\n3\n4\n5', 'seq 1 5')
@@ -70,7 +72,7 @@ end)
 
 test('Check command with table args', function()
 	local r = stat('/bin', {format='%a %n'})
-	ok(tostring(r) == '755 /bin', 'stat --format "%a %n" /bin')
+	ok(tostring(r) == "'755 /bin'", 'stat --format "%a %n" /bin')
 end)
 
 if tests_failed > 0 then os.exit(1) end

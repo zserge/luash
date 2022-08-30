@@ -47,7 +47,7 @@ local function pipe_simple(input, cmd, ...)
     -- Launch child process
     --
     local pid, w, r, e = popen3(cmd, table.unpack({...}))
-    assert(pid ~= nil, "filter() unable to popen3()")
+    assert(pid ~= nil, "pipe_simple() unable to popen3()")
 
     --
     -- Write to popen3's stdin, important to close it as some (most?) proccess
@@ -139,8 +139,7 @@ local function tostring(self)
     -- return trimmed command output as a string
     local out = self.__stdout:match('^%s*(.-)%s*$')
     local err = self.__stderr:match('^%s*(.-)%s*$')
-    if #err == 0
-    then
+    if #err == 0 then
         return out
     end
     -- if there is an error, print the output and error string
@@ -217,8 +216,7 @@ end
 
 local function list_contains(v, t, comp)
     for _, kv in pairs(v) do
-        if comp(kv, t)
-        then
+        if comp(kv, t) then
             return true
         end
     end
@@ -237,16 +235,13 @@ M.__index_ignore_function = {"cd", "stdout", "stderr"}
 --
 local function install()
     mt.__index = function(t, cmd)
-        if list_contains(M.__index_ignore_prefix, cmd, prefcmp)
-        then
+        if list_contains(M.__index_ignore_prefix, cmd, prefcmp) then
             return rawget(t, cmd)
         end
-        if list_contains(M.__index_ignore_exact, cmd, strcmp)
-        then
+        if list_contains(M.__index_ignore_exact, cmd, strcmp) then
             return rawget(t, cmd)
         end
-        if list_contains(M.__index_ignore_function, cmd, strcmp)
-        then
+        if list_contains(M.__index_ignore_function, cmd, strcmp) then
             return FUNCTIONS[cmd]
         end
         return command(cmd)
@@ -269,8 +264,7 @@ local function cd(...)
         __exitcode = 0,
         __signal = 0,
     }
-    if pt == nil
-    then
+    if pt == nil then
         t.__stderr = "cd: The directory \"" .. dir .. "\" does not exist"
         t.__exitcode = 1
     end
@@ -309,8 +303,7 @@ setmetatable(M, {
         return command(cmd, ...)
     end,
     __index = function(t, cmd)
-        if list_contains(M.__index_ignore_function, cmd, strcmp)
-        then
+        if list_contains(M.__index_ignore_function, cmd, strcmp) then
             return FUNCTIONS[cmd]
         end
         return command(cmd)
