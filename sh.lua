@@ -1,5 +1,69 @@
 local posix = require("posix")
 
+--
+-- Create a Table with stack functions
+--
+local Stack = {}
+function Stack:Create()
+
+    -- stack table
+    local t = {}
+    -- entry table
+    t._et = {}
+
+    -- push a value on to the stack
+    function t:push(...)
+        if ... then
+            local targs = {...}
+            -- add values
+            for _,v in ipairs(targs) do
+                table.insert(self._et, v)
+            end
+        end
+    end
+
+    -- pop a value from the stack
+    function t:pop(num)
+
+        -- get num values from stack
+        local num = num or 1
+
+        -- return table
+        local entries = {}
+
+        -- get values into entries
+        for i = 1, num do
+            -- get last entry
+            if #self._et ~= 0 then
+                table.insert(entries, self._et[#self._et])
+                -- remove last value
+                table.remove(self._et)
+            else
+                break
+            end
+        end
+        -- return unpacked entries
+        return table.unpack(entries)
+    end
+
+    -- get entries
+    function t:getn()
+        return #self._et
+    end
+
+    -- list values
+    function t:list()
+        for i,v in pairs(self._et) do
+            print(i, v)
+        end
+    end
+    return t
+end
+
+
+
+
+
 local M = {}
 
 --
@@ -230,7 +294,7 @@ end
 --
 M.__index_ignore_prefix   = {"_G", "_PROMPT"}
 M.__index_ignore_exact    = {}
-M.__index_ignore_function = {"cd", "stdout", "stderr"}
+M.__index_ignore_function = {"cd", "pushd", "popd", "stdout", "stderr"}
 
 --
 -- set hook for undefined variables
@@ -287,9 +351,72 @@ local function stderr(t)
     return t.__stderr
 end
 
+M.PUSHD_STACK = Stack:Create()
+
+local function pushd(...)
+    local args = flatten({...})
+    local dir = args.args[1]
+    local old_dir = tostring(M.pwd())
+    local pt = posix.chdir(dir)
+    if pt ~= nil then
+        M.PUSHD_STACK:push(old_dir)
+    end
+    local t = {
+        __input = args.input, -- set input = output from previous pipelines
+        __stdout = args.input,
+        __stderr = "",
+        __exitcode = 0,
+        __signal = 0,
+    }
+    if pt == nil then
+        t.__stderr = "pushd: The directory \"" .. dir .. "\" does not exist"
+        t.__exitcode = 1
+    end
+    local mt = {
+        __index = function(self, k, ...)
+            return M[k]
+        end,
+        __tostring = tostring
+    }
+    return setmetatable(t, mt)
+end
+
+local function popd(...)
+    local args = flatten({...})
+    local ndir = M.PUSHD_STACK:getn()
+    local dir = M.PUSHD_STACK:pop(1)
+    local pt
+    if ndir > 0 then
+        pt = posix.chdir(dir)
+    else
+        pt = nil
+        dir = "EMPTY"
+    end
+    local t = {
+        __input = args.input, -- set input = output from previous pipelines
+        __stdout = args.input,
+        __stderr = "",
+        __exitcode = 0,
+        __signal = 0,
+    }
+    if pt == nil then
+        t.__stderr = "popd: The directory \"" .. dir .. "\" does not exist"
+        t.__exitcode = 1
+    end
+    local mt = {
+        __index = function(self, k, ...)
+            return M[k]
+        end,
+        __tostring = tostring
+    }
+    return setmetatable(t, mt)
+end
+
 M.FUNCTIONS.cd = cd
 M.FUNCTIONS.stdout = stdout
 M.FUNCTIONS.stderr = stderr
+M.FUNCTIONS.pushd = pushd
+M.FUNCTIONS.popd  = popd
 
 --
 -- export command() and install() functions
