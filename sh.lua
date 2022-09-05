@@ -1,7 +1,8 @@
 local posix = require("posix")
 
 --
--- Create a Table with stack functions
+-- Create a Table with stack functions, used by popd/pushd based on:
+-- http://lua-users.org/wiki/SimpleStack
 --
 local Stack = {}
 function Stack:Create()
