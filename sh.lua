@@ -85,6 +85,8 @@ local function pipe_simple(input, cmd, ...)
     -- Clean-up child (no zombies) and get return status
     --
     local wait_pid, wait_cause, wait_status = posix.wait(pid)
+    posix.close(r)
+    posix.close(e)
 
     return wait_status, wait_cause, table.concat(stdout), table.concat(stderr)
 end
