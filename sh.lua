@@ -244,7 +244,7 @@ local function install()
             return rawget(t, cmd)
         end
         if list_contains(M.__index_ignore_function, cmd, strcmp) then
-            return FUNCTIONS[cmd]
+            return M.FUNCTIONS[cmd]
         end
         return command(cmd)
     end
@@ -253,7 +253,7 @@ end
 --
 -- manually defined functions
 --
-FUNCTIONS = {}
+M.FUNCTIONS = {}
 
 local function cd(...)
     local args = flatten({...})
@@ -287,9 +287,9 @@ local function stderr(t)
     return t.__stderr
 end
 
-FUNCTIONS.cd = cd
-FUNCTIONS.stdout = stdout
-FUNCTIONS.stderr = stderr
+M.FUNCTIONS.cd = cd
+M.FUNCTIONS.stdout = stdout
+M.FUNCTIONS.stderr = stderr
 
 --
 -- export command() and install() functions
@@ -306,7 +306,7 @@ setmetatable(M, {
     end,
     __index = function(t, cmd)
         if list_contains(M.__index_ignore_function, cmd, strcmp) then
-            return FUNCTIONS[cmd]
+            return M.FUNCTIONS[cmd]
         end
         return command(cmd)
     end
