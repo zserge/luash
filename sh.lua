@@ -158,24 +158,24 @@ end
 --
 local function arg(k, a)
     if not a then return k end
-    if type(a) == 'string' and #a > 0 then return k..'=\''..a..'\'' end
-    if type(a) == 'number' then return k..'='..tostring(a) end
-    if type(a) == 'boolean' and a == true then return k end
-    error('invalid argument type', type(a), a)
+    if type(a) == "string" and #a > 0 then return k .. "=\'" .. a .. "\'" end
+    if type(a) == "number" then return k .. "=" .. tostring(a) end
+    if type(a) == "boolean" and a == true then return k end
+    error("invalid argument type: " .. type(a), a)
 end
 
 --
 -- converts nested tables into a flat list of arguments and concatenated input
 --
 local function flatten(t)
-    local result = {args = {}, input = ''}
+    local result = {args = {}, input = ""}
 
     local function f(t)
         local keys = {}
         for k = 1, #t do
             keys[k] = true
             local v = t[k]
-            if type(v) == 'table' then
+            if type(v) == "table" then
                 f(v)
             else
                 table.insert(result.args, v)
@@ -184,9 +184,9 @@ local function flatten(t)
         for k, v in pairs(t) do
             if k == '__input' then
                 result.input = result.input .. v
-            elseif not keys[k] and k:sub(1, 1) ~= '_' then
+            elseif not keys[k] and k:sub(1, 1) ~= "_" then
                 local key = '-'..k
-                if #k > 1 then key = '-' ..key end
+                if #k > 1 then key = "-" .. key end
                 table.insert(result.args, arg(key, v))
             end
         end
@@ -201,8 +201,8 @@ end
 --
 local function tostring(self)
     -- return trimmed command output as a string
-    local out = self.__stdout:match('^%s*(.-)%s*$')
-    local err = self.__stderr:match('^%s*(.-)%s*$')
+    local out = self.__stdout:match("^%s*(.-)%s*$")
+    local err = self.__stderr:match("^%s*(.-)%s*$")
     if #err == 0 then
         return out
     end
