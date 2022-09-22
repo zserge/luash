@@ -197,7 +197,7 @@ local function flatten(t)
 end
 
 --
--- return a string representation of a shell command outpu
+-- return a string representation of a shell command output
 --
 local function tostring(self)
     -- return trimmed command output as a string
