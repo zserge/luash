@@ -76,4 +76,3 @@ test('Check command with table args', function()
 end)
 
 if tests_failed > 0 then os.exit(1) end
-

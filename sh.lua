@@ -199,10 +199,16 @@ end
 --
 -- return a string representation of a shell command output
 --
+local function strip(str)
+    -- capture repeated charaters (.-) startign with the first non-space ^%s,
+    -- and not captuing any trailing spaces %s*
+    return str:match("^%s*(.-)%s*$")
+end
+
 local function tostring(self)
     -- return trimmed command output as a string
-    local out = self.__stdout:match("^%s*(.-)%s*$")
-    local err = self.__stderr:match("^%s*(.-)%s*$")
+    local out = strip(self.__stdout)
+    local err = strip(self.__stderr)
     if #err == 0 then
         return out
     end
@@ -354,7 +360,7 @@ M.PUSHD_STACK = Stack:Create()
 local function pushd(...)
     local args = flatten({...})
     local dir = args.args[1]
-    local old_dir = tostring(M.pwd())
+    local old_dir = strip(stdout(M.pwd()))
     local pt = posix.chdir(dir)
     if pt ~= nil then
         M.PUSHD_STACK:push(old_dir)
