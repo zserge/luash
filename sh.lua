@@ -79,6 +79,7 @@ local function popen3(path, ...)
     if pid == 0 then
         posix.close(w1)
         posix.close(r2)
+        posix.close(r3)
         posix.dup2(r1, posix.fileno(io.stdin))
         posix.dup2(w2, posix.fileno(io.stdout))
         posix.dup2(w3, posix.fileno(io.stderr))
@@ -101,6 +102,35 @@ local function popen3(path, ...)
 end
 
 --
+-- Async posix.read function. Yields:
+--   {poll status, pipe ended, pipe data, poll code}
+--     * poll status: 0 (timeout), 1 (ready), nil (failure)
+--     * pipe ended: false (pipe has more data), true (pipe has no more data)
+--     * pipe data: data chunk
+--     * poll code: full return code from posix.rpoll
+--
+local function read_async(p, bufsize, timeout)
+    while true do
+        local poll_code = {posix.rpoll(p, timeout)}
+        if poll_code[1] == 0 then
+            -- timeout => pipe not ready
+            coroutine.yield(0, nil, nil, poll_code)
+        elseif poll_code[1] == 1 then
+            -- pipe ready => read data
+            local buf = posix.read(p, bufsize)
+            local ended = (buf == nil or #buf == 0)
+            coroutine.yield(1, ended, buf, poll_code)
+            -- stop if pipe has ended ended
+            if ended then break end
+        else
+            -- poll failed
+            coroutine.yield(nil, nil, nil, poll_code)
+            break
+        end
+    end
+end
+
+--
 -- Pipe input into cmd + optional arguments and wait for completion and then
 -- return status code, stdout and stderr from cmd.
 --
@@ -119,28 +149,39 @@ local function pipe_simple(input, cmd, ...)
     posix.close(w)
 
     local bufsize = 4096
-    --
-    -- Read popen3's stdout via Posix file handle
-    --
-    local stdout = {}
-    local i = 1
-    while true do
-        local buf = posix.read(r, bufsize)
-        if buf == nil or #buf == 0 then break end
-        stdout[i] = buf
-        i = i + 1
-    end
+    local timeout = 100
 
     --
-    -- Read popen3's stderr via Posix file handle
+    -- Read popen3's stdout and stderr simultanously via Posix file handle
     --
+    local stdout = {}
     local stderr = {}
-    local i = 1
+    local stdout_ended = false
+    local stderr_ended = false
+    local read_stdout = coroutine.create(function () read_async(r, bufsize, timeout) end)
+    local read_stderr = coroutine.create(function () read_async(e, bufsize, timeout) end)
     while true do
-        local buf = posix.read(e, bufsize)
-        if buf == nil or #buf == 0 then break end
-        stderr[i] = buf
-        i = i + 1
+        if not stdout_ended then
+            local cstatus, pstatus, ended, buf, pcode = coroutine.resume(read_stdout)
+            if pstatus == 1 then
+                stdout_ended = ended
+                if not stdout_ended then
+                    stdout[#stdout + 1] = buf
+                end
+            end
+        end
+
+        if not stderr_ended then
+            local cstatus, pstatus, ended, buf, pcode = coroutine.resume(read_stderr)
+            if pstatus == 1 then
+                stderr_ended = ended
+                if not stderr_ended then
+                    stderr[#stderr + 1] = buf
+                end
+            end
+        end
+
+        if stdout_ended and stderr_ended then break end
     end
 
     --
