@@ -125,7 +125,7 @@ local function pipe_simple(input, cmd, ...)
     local stdout = {}
     local i = 1
     while true do
-        buf = posix.read(r, bufsize)
+        local buf = posix.read(r, bufsize)
         if buf == nil or #buf == 0 then break end
         stdout[i] = buf
         i = i + 1
@@ -137,7 +137,7 @@ local function pipe_simple(input, cmd, ...)
     local stderr = {}
     local i = 1
     while true do
-        buf = posix.read(e, bufsize)
+        local buf = posix.read(e, bufsize)
         if buf == nil or #buf == 0 then break end
         stderr[i] = buf
         i = i + 1
@@ -146,7 +146,7 @@ local function pipe_simple(input, cmd, ...)
     --
     -- Clean-up child (no zombies) and get return status
     --
-    local wait_pid, wait_cause, wait_status = posix.wait(pid)
+    local _, wait_cause, wait_status = posix.wait(pid)
     posix.close(r)
     posix.close(e)
 
@@ -168,7 +168,10 @@ end
 -- converts nested tables into a flat list of arguments and concatenated input
 --
 local function flatten(t)
-    local result = {args = {}, input = ""}
+    local result = {
+        args = {}, input = "", __stdout = "", __stderr = "",
+        __exitcode = nil, __signal = nil
+    }
 
     local function f(t)
         local keys = {}
@@ -182,10 +185,18 @@ local function flatten(t)
             end
         end
         for k, v in pairs(t) do
-            if k == '__input' then
+            if k == "__input" then
                 result.input = result.input .. v
+            elseif k == "__stdout" then
+                result.__stdout = result.__stdout .. v
+            elseif k == "__stderr" then
+                result.__stderr = result.__stderr .. v
+            elseif k == "__exitcode" then
+                result.__exitcode = v
+            elseif k == "__signal" then
+                result.__signal = v
             elseif not keys[k] and k:sub(1, 1) ~= "_" then
-                local key = '-'..k
+                local key = '-' .. k
                 if #k > 1 then key = "-" .. key end
                 table.insert(result.args, arg(key, v))
             end
@@ -250,7 +261,7 @@ local function command(cmd, ...)
             __stdout = stdout,
             __stderr = stderr,
             __exitcode = cause == "exited" and status or 127,
-            __signal = exit == "killed" and status or 0,
+            __signal = cause == "killed" and status or 0,
         }
         local mt = {
             __index = function(self, k, ...)
@@ -329,13 +340,13 @@ local function cd(...)
     local pt = posix.chdir(dir)
     local t = {
         __input = args.input, -- set input = output from previous pipelines
-        __stdout = args.input,
-        __stderr = "",
-        __exitcode = 0,
-        __signal = 0,
+        __stdout = args.__stdout,
+        __stderr = args.__stderr,
+        __exitcode = args.__exitcode,
+        __signal = args.__signal
     }
     if pt == nil then
-        t.__stderr = "cd: The directory \"" .. dir .. "\" does not exist"
+        t.__stderr = "cd: The directory \'" .. dir .. "\' does not exist"
         t.__exitcode = 1
     end
     local mt = {
@@ -367,13 +378,13 @@ local function pushd(...)
     end
     local t = {
         __input = args.input, -- set input = output from previous pipelines
-        __stdout = args.input,
-        __stderr = "",
-        __exitcode = 0,
-        __signal = 0,
+        __stdout = args.__stdout,
+        __stderr = args.__stderr,
+        __exitcode = args.__exitcode,
+        __signal = args.__signal
     }
     if pt == nil then
-        t.__stderr = "pushd: The directory \"" .. dir .. "\" does not exist"
+        t.__stderr = "pushd: The directory \'" .. dir .. "\' does not exist"
         t.__exitcode = 1
     end
     local mt = {
@@ -398,13 +409,13 @@ local function popd(...)
     end
     local t = {
         __input = args.input, -- set input = output from previous pipelines
-        __stdout = args.input,
-        __stderr = "",
-        __exitcode = 0,
-        __signal = 0,
+        __stdout = args.__stdout,
+        __stderr = args.__stderr,
+        __exitcode = args.__exitcode,
+        __signal = args.__signal
     }
     if pt == nil then
-        t.__stderr = "popd: The directory \"" .. dir .. "\" does not exist"
+        t.__stderr = "popd: The directory \'" .. dir .. "\' does not exist"
         t.__exitcode = 1
     end
     local mt = {
