@@ -1,5 +1,13 @@
 local posix = require("posix")
 
+
+--
+-- We'll be overwriding the lua `tostring` function, so keep a reference to the
+-- original lua version here:
+---
+local _lua_tostring = tostring
+
+
 --
 -- Create a Table with stack functions, used by popd/pushd based on:
 -- http://lua-users.org/wiki/SimpleStack
@@ -200,7 +208,7 @@ end
 local function arg(k, a)
     if not a then return k end
     if type(a) == "string" and #a > 0 then return k .. "=\'" .. a .. "\'" end
-    if type(a) == "number" then return k .. "=" .. tostring(a) end
+    if type(a) == "number" then return k .. "=" .. _lua_tostring(a) end
     if type(a) == "boolean" and a == true then return k end
     error("invalid argument type: " .. type(a), a)
 end
@@ -222,7 +230,7 @@ local function flatten(t)
             if type(v) == "table" then
                 f(v)
             else
-                table.insert(result.args, v)
+                table.insert(result.args, _lua_tostring(v))
             end
         end
         for k, v in pairs(t) do
@@ -283,10 +291,10 @@ local function command(cmd, ...)
         local args = flatten({...})
         local all_args = {}
         for _, x in pairs(prearg) do
-            table.insert(all_args, x)
+            table.insert(all_args, _lua_tostring(x))
         end
         for _, x in pairs(args.args) do
-            table.insert(all_args, x)
+            table.insert(all_args, _lua_tostring(x))
         end
 
         local status, cause, stdout, stderr = pipe_simple(
@@ -350,7 +358,7 @@ end
 --
 M.__index_ignore_prefix   = {"_G", "_PROMPT"}
 M.__index_ignore_exact    = {}
-M.__index_ignore_function = {"cd", "pushd", "popd", "stdout", "stderr"}
+M.__index_ignore_function = {"cd", "pushd", "popd", "stdout", "stderr", "print"}
 
 --
 -- set hook for undefined variables
@@ -468,11 +476,32 @@ local function popd(...)
     return setmetatable(t, mt)
 end
 
+local _lua_print = print
+local function print(...)
+    local args = flatten({...})
+    _lua_print(tostring(args))
+    local t = {
+        __input = args.input, -- set input = output from previous pipelines
+        __stdout = args.__stdout,
+        __stderr = args.__stderr,
+        __exitcode = args.__exitcode,
+        __signal = args.__signal
+    }
+    local mt = {
+        __index = function(self, k, ...)
+            return M[k]
+        end,
+        __tostring = tostring
+    }
+    return setmetatable(t, mt)
+end
+
 M.FUNCTIONS.cd = cd
 M.FUNCTIONS.stdout = stdout
 M.FUNCTIONS.stderr = stderr
 M.FUNCTIONS.pushd = pushd
 M.FUNCTIONS.popd  = popd
+M.FUNCTIONS.print = print
 
 --
 -- export command() and install() functions

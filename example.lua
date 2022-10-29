@@ -1,4 +1,5 @@
 local sh = require('sh')
+sh.install()
 
 -- any shell command can be called as a function
 print('User:', whoami())
@@ -29,8 +30,13 @@ print(e('this', 'is', 'some', 'output'))
 print(greet('world'))
 print(greet('foo'))
 
--- sh module itself can be called as a function
--- it's an alias for sh.command()
-print(sh('type')('ls'))
-sh 'type' 'ls' : print()
+-- sh module itself can be called as a function it's an alias for sh.command()
 
+-- NOTE: sometimes builtin shell do not exist at programs in the $PATH. One way
+-- to call these would be to create an executable script, which calls the
+-- builtin command command.
+print(sh('./example_type_wrapper.sh')('ls'))
+sh './example_type_wrapper.sh' 'ls' : print()
+-- the other solution is to pass the command directly to `bash -c <command>`
+-- we use a table to delineate multiple arguments from multi-word statements
+print(sh("bash"){"-c", "type type"}) -- NOTE the {}
