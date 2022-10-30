@@ -11,7 +11,6 @@ Via luarocks:
 
 ```
 luarocks install luash 
-
 ```
 
 Or just clone this repo and copy sh.lua into your project.
