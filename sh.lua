@@ -72,6 +72,8 @@ end
 
 local M = {}
 
+M.version = "Automatic Shell Bindings for Lua / LuaSH 1.0.0"
+
 --
 -- Simple popen3() implementation
 --

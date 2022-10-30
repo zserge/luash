@@ -2,14 +2,15 @@
 
 [![Build Status](https://travis-ci.org/zserge/luash.svg)](https://travis-ci.org/zserge/luash)
 
-Tiny library for shell scripting with Lua (inspired by Python's sh module).
+Tiny library for shell scripting with Lua (inspired by
+[Python's sh module](https://pypi.org/project/sh/)).
 
 ## Install
 
 Via luarocks:
 
 ```
-luarocks install --server=http://luarocks.org/dev luash 
+luarocks install luash 
 
 ```
 
@@ -17,11 +18,13 @@ Or just clone this repo and copy sh.lua into your project.
 
 ## Simple usage
 
-Every command that can be called via os.execute can be used a global function.
-All the arguments passed into the function become command arguments.
+Every command that can be called via os.execute (except shell builtins -- more
+on that later) can be used a global function.  All the arguments passed into the
+function become command arguments.
 
 ``` lua
-require('sh')
+local sh = require('sh')
+sh.install() -- make shell bindings available to the global namespace
 
 local wd = tostring(pwd()) -- calls `pwd` and returns its output as a string
 
@@ -30,6 +33,11 @@ for f in string.gmatch(files, "[^\n]+") do
 	print(f)
 end
 ```
+
+Note that `sh.install()` is needed to make all shell comamnds into global
+functions. If `sh.install()` is omitted, then the `sh` namespace remains
+isolated to the module. In that case, you can call any shell comman using
+`sh.<command name>(<args>)` (e.g. `sh.pwd()`).
 
 ## Command input and pipelines
 
@@ -45,14 +53,16 @@ one I/O loop at a time). So the inner-most command is executed, its output is
 read, the the outer command is execute with the output redirected etc.
 
 ``` lua
-require('sh')
+local sh = require('sh')
+sh.install()
 
 local words = 'foo\nbar\nfoo\nbaz\n'
 local u = uniq(sort({__input = words})) -- like $(echo ... | sort | uniq)
 print(u) -- prints "bar", "baz", "foo"
 ```
 
-Pipelines can be also written as chained function calls. Lua allows to omit parens, so the syntax really resembles unix shell:
+Pipelines can be also written as chained function calls. Lua allows to omit
+parens, so the syntax really resembles unix shell:
 
 ``` lua
 -- $ ls /bin | grep $filter | wc -l
@@ -62,7 +72,18 @@ wc(grep(ls('/bin'), filter), '-l')
 -- chained syntax
 ls('/bin'):grep(filter):wc('-l')
 -- chained syntax without parens
-ls '/bin' : grep filter : wc '-l'
+ls '/bin' : grep(filter) : wc '-l'
+```
+
+**Important**: All function calls after a `:` occur inside of the `sh` module.
+*Thus, if `sh` hasn't been installed into the global namespace, then `sh` must
+*be pre-pended to _only the first_ function call in a "pipe". E.g. the last
+*statement in the example above becomes:
+
+```lua
+local sh = require('sh')
+-- note: __not__ calling `sh.install()`
+sh.ls '/bin' : grep(filter) : wc '-l'
 ```
 
 ## Partial commands and commands with tricky names
@@ -98,12 +119,13 @@ Key-value arguments can be also specified as argument table pairs:
 
 ```lua
 require('sh')
+sh.install()
 
 -- $ somecommand --format=long --interactive -u=0
 somecommand({format="long", interactive=true, u=0})
 ```
-It becomes handy if you need to toggle or modify certain command line
-argumnents without manually changing the argumnts list.
+It becomes handy if you need to toggle or modify certain command line argumnents
+without manually changing the argumnts list.
 
 ## License
 
