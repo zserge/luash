@@ -1,9 +1,13 @@
-# luash
+# sh (formerly called luash)
 
 [![Build Status](https://travis-ci.org/zserge/luash.svg)](https://travis-ci.org/zserge/luash)
 
 Tiny library for shell scripting with Lua (inspired by
-[Python's sh module](https://pypi.org/project/sh/)).
+[Python's sh module](https://pypi.org/project/sh/)). This is a rewrite of
+[luash](https://github.com/zserge/luash) to use Lua's POSIX bindings
+[luaposix](https://luarocks.org/modules/gvvaughan/luaposix) for process
+execution and piping. This version also includes an implementation of `cd`,
+`pushd`, and `popd`.
 
 ## Install
 
@@ -103,6 +107,10 @@ gittag('-l') -- list all git tags
 
 `sh` can be used as a function as well, it's an alias to `sh.command()`
 
+## Return type
+
+## Accessing `stdout` and `stderr`
+
 ## Exit status and signal values
 
 Each command function returns a table with `__exitcode` and `__signal` fields.
@@ -125,6 +133,61 @@ somecommand({format="long", interactive=true, u=0})
 ```
 It becomes handy if you need to toggle or modify certain command line argumnents
 without manually changing the argumnts list.
+
+## Managing Errors
+
+By default, whenever a command returns an error (i.e. a non-zero `__exitcode`,
+or a shell command set `status` to non-zero) then `sh` will raise the error. For
+example, the program:
+
+```lua
+local sh = require "sh"
+sh.asdf()
+```
+
+Will throw an error (assuming the `asdf` is not a valid program):
+
+```
+lua: ./sh.lua:307: lua: ./sh.lua:101: execp() failed
+stack traceback:
+	[C]: in function 'assert'
+	./sh.lua:101: in upvalue 'popen3'
+	./sh.lua:151: in upvalue 'pipe_simple'
+	./sh.lua:302: in field 'asdf'
+	test.lua:3: in main chunk
+	[C]: in ?
+```
+
+This behaviour can be controlled by setting `sh.__raise_errors` to false -- the
+error will be ingored (and passed to the `__exitcode` and `__stderr` return
+fields). For example, the program:
+
+```lua
+local sh = require "sh"
+sh.__raise_errors = false
+local cmd = sh.asdf()
+print(cmd)
+```
+
+Now doesn't throw and error (it exits normally), and prints the error message
+instead:
+
+```
+O: 
+E: lua: ./sh.lua:101: execp() failed
+stack traceback:
+	[C]: in function 'assert'
+	./sh.lua:101: in upvalue 'popen3'
+	./sh.lua:151: in upvalue 'pipe_simple'
+	./sh.lua:302: in field 'asdf'
+	test.lua:3: in main chunk
+	[C]: in ?
+1
+```
+
+## Changing Directories
+
+## Questions
 
 ## License
 
