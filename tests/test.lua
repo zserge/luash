@@ -75,4 +75,8 @@ test('Check command with table args', function()
 	ok(tostring(r) == "'777 /bin'", 'stat --format "%a %n" /bin')
 end)
 
+test('Check concatenation', function()
+	ok(echo("te ").."st" == "test" and "te"..echo(" st") == "test")
+end)
+
 if tests_failed > 0 then os.exit(1) end

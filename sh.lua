@@ -1,6 +1,5 @@
 local posix = require("posix")
 
-
 --
 -- We'll be overwriding the lua `tostring` function, so keep a reference to the
 -- original lua version here:
@@ -278,6 +277,15 @@ local function tostring(self)
     return "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode
 end
 
+---the concatenation (..) operator must be overloaded so you don't have to keep calling `tostring`
+local function concat(self, rhs)
+    local out, err = strip(self.__stdout), strip(self.__stderr)
+    if #err ~= 0 then out = "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode end
+
+    --Errors when type(rhs) == "string" for some reason
+    return out..(type(rhs) == "string" and rhs or tostring(rhs))
+end
+
 --
 -- Configurable flag that will raise errors and/or halt program on error
 --
@@ -318,7 +326,8 @@ local function command(cmd, ...)
             __index = function(self, k, ...)
                 return M[k]
             end,
-            __tostring = tostring
+            __tostring = tostring,
+            __concat = concat
         }
         return setmetatable(t, mt)
     end
@@ -404,7 +413,8 @@ local function cd(...)
         __index = function(self, k, ...)
             return M[k]
         end,
-        __tostring = tostring
+        __tostring = tostring,
+        __concat = concat
     }
     return setmetatable(t, mt)
 end
@@ -442,7 +452,8 @@ local function pushd(...)
         __index = function(self, k, ...)
             return M[k]
         end,
-        __tostring = tostring
+        __tostring = tostring,
+        __concat = concat
     }
     return setmetatable(t, mt)
 end
@@ -473,7 +484,8 @@ local function popd(...)
         __index = function(self, k, ...)
             return M[k]
         end,
-        __tostring = tostring
+        __tostring = tostring,
+        __concat = concat
     }
     return setmetatable(t, mt)
 end
@@ -493,7 +505,8 @@ local function print(...)
         __index = function(self, k, ...)
             return M[k]
         end,
-        __tostring = tostring
+        __tostring = tostring,
+        __concat = concat
     }
     return setmetatable(t, mt)
 end
