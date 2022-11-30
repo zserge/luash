@@ -279,7 +279,9 @@ end
 
 ---the concatenation (..) operator must be overloaded so you don't have to keep calling `tostring`
 local function concat(self, rhs)
-    local out, err = strip(self.__stdout), strip(self.__stderr)
+    local out, err = self, ""
+    if type(out) ~= "string" then out, err = strip(self.__stdout), strip(self.__stderr) end
+
     if #err ~= 0 then out = "O: " .. out .. "\nE: " .. err .. "\n" .. self.__exitcode end
 
     --Errors when type(rhs) == "string" for some reason
