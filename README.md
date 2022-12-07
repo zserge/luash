@@ -89,6 +89,15 @@ local sh = require('sh')
 sh.ls '/bin' : grep(filter) : wc '-l'
 ```
 
+## Command output can be concatenated using `..`
+
+Output from commands can be concatenated using the `..` operator:
+
+```lua
+print("I am: "..whoami())
+print(ls "-l":wc "-l".." files/folders found!")
+```
+
 ## Partial commands and commands with tricky names
 
 You can use `sh.command` to construct a command function, optionally
@@ -110,11 +119,11 @@ gittag('-l') -- list all git tags
 ## Return type
 
 Every command returns a table with: `__stdout`, `__stderr`, `__input`,
-`__exitcode`, and `__signal`. The table also has metatable fields `__index` and
-`__tostring`. These always exist, and allow chaining using the `:` operator.
-`__input` is used for command chaining -- a command that is "neutral" (like
-`cd`) will pass all inputs through, while the usual POSIX pipe is accomplished
-by setting `__input` to `__stdout` from the previous command.
+`__exitcode`, and `__signal`. The table also has metatable fields `__index`,
+`__tostring`, and __concat. These always exist, and allow chaining using the
+`:` operator. `__input` is used for command chaining -- a command that is
+"neutral" (like `cd`) will pass all inputs through, while the usual POSIX pipe
+is accomplished by setting `__input` to `__stdout` from the previous command.
 
 ## Accessing `stdout` and `stderr`
 
