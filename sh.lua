@@ -297,6 +297,9 @@ M.__raise_errors  = true
 -- returns a function that executes the command with given args and returns its
 -- output, exit status etc
 --
+---@param cmd sh.CommandName | string
+---@param ... string
+---@return fun(...: string): sh.ReturnType
 local function command(cmd, ...)
     local prearg = {...}
     return function(...)
