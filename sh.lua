@@ -299,7 +299,7 @@ M.__raise_errors  = true
 --
 ---@param cmd sh.CommandName | string
 ---@param ... string
----@return fun(...: string): sh.ReturnType
+---@return fun(...: string | sh.ReturnType): sh.ReturnType
 local function command(cmd, ...)
     local prearg = {...}
     return function(...)

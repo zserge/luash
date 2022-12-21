@@ -62,7 +62,6 @@ for v in assert(os.getenv("PATH")):gmatch("([^:]+)") do
         for file in lfs.dir(v) do
             if file == "." or file == ".." then goto next end
             file = v.."/"..file --For some reason lfs.dir only gives basenames
-            print(file)
 
             local attribs, err = lfs.attributes(file)
             if not attribs then goto next end
@@ -85,7 +84,7 @@ typef:write('\n')
 
 typef:write("---@class sh.Shell\n")
 for i, v in ipairs(execs) do
-    typef:write(string.format("---@field ['%s'] fun(...: string): sh.ReturnType\n", v))
+    typef:write(string.format("---@field ['%s'] fun(...: string | sh.ReturnType): sh.ReturnType\n", v))
 end
 typef:write('\n')
 
