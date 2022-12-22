@@ -71,7 +71,7 @@ end
 ---@class sh.lua : sh.Shell
 local M = {}
 
-M.version = "Automatic Shell Bindings for Lua / LuaSH 1.0.0"
+M.version = "Automatic Shell Bindings for Lua / LuaSH 1.2.0"
 
 --
 -- Simple popen3() implementation
