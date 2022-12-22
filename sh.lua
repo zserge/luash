@@ -68,7 +68,7 @@ function Stack:Create()
     return t
 end
 
-
+---@class sh.lua : sh.Shell
 local M = {}
 
 M.version = "Automatic Shell Bindings for Lua / LuaSH 1.0.0"
@@ -297,6 +297,9 @@ M.__raise_errors  = true
 -- returns a function that executes the command with given args and returns its
 -- output, exit status etc
 --
+---@param cmd sh.CommandName | string
+---@param ... string
+---@return fun(...: string | sh.ReturnType): sh.ReturnType
 local function command(cmd, ...)
     local prearg = {...}
     return function(...)
@@ -376,6 +379,7 @@ M.__index_ignore_function = {"cd", "pushd", "popd", "stdout", "stderr", "print"}
 --
 -- set hook for undefined variables
 --
+---Adds the shell functions into the global table
 local function install()
     mt.__index = function(t, cmd)
         if list_contains(M.__index_ignore_prefix, cmd, prefcmp) then
