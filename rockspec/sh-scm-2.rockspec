@@ -1,5 +1,5 @@
-package = "luash"
-version = "scm-1"
+package = "sh"
+version = "scm-2"
 
 source = {
     url = "git://github.com/JBlaschke/luash.git",
