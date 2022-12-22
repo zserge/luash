@@ -23,6 +23,10 @@ dependencies = {
 build = {
     type = "none",
     install = {
+        bin = {
+            ["sh.autogen"] = "sh.autogen.lua"
+        },
+
         lua = {
             sh = "sh.lua",
         },

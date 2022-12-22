@@ -1,5 +1,5 @@
 package = "sh"
-version = "1.1-0"
+version = "1.2-0"
 
 source = {
     url = "git://github.com/JBlaschke/luash.git",
@@ -23,6 +23,10 @@ dependencies = {
 build = {
     type = "none",
     install = {
+        bin = {
+            ["sh.autogen"] = "sh.autogen.lua"
+        },
+
         lua = {
             sh = "sh.lua",
         },
